@@ -11,5 +11,7 @@ add
 pop ax
 pushr ax
 push 10
-jb NEXT:
+ja SKIP:
 hlt
+SKIP:
+jmp NEXT:

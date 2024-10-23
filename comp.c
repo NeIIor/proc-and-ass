@@ -6,7 +6,6 @@ int main() {
     initComp(&Comp);
     label_t* Label = initLabel();
     passComp (&Comp, Label);
-    PRINT_RED("MEOW\n\n\n");
     dtorLabel(Label);
     return 0;
 }
@@ -35,7 +34,7 @@ void dtorLabel (label_t* Label) {
     free (Label);
 }
 
-void dump (label_t* Label) {
+void dumpLabel (label_t* Label) {
     for (int i = 0; i < SIZE_LABEL; i++) {
         printf("Index: %d\tAddress: %u\tName: %s\n", i, Label[i].add, Label[i].name);
     }
@@ -52,7 +51,7 @@ size_t findLabel (label_t* Label, char* str) {
     return INVALID_ADDRESS;
 }
 
-bool pushLabel (label_t* Label, char* str, size_t size, size_t ip) {
+bool pushLabel (label_t* Label, const char* str, const size_t size, const size_t ip) {       //TODO - consts
     for (int i = 0; i < SIZE_LABEL; i++) {
         if (Label[i].add == INVALID_ADDRESS) {
             Label[i].add = ip;
@@ -89,14 +88,12 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
     char* str = (char*) calloc (SIZE_CMD, sizeof(char));
     char* buf = (char*) calloc (MAX_LABEL_NAME + 1, sizeof(char));
 
-    if (!str) {
+    if (!str || !buf) {
         printf("Unluck with allocating");
-    }
+    } 
 
-    while (strcmp (str, "hlt")) {
-        fscanf (cmd, "%s", str); 
-        fprintf(stderr, "%s\n", str);
-
+    while (fscanf(cmd, "%s", str) != -1) { 
+        printf("\t%s\n", str);
         if (strchr (str, ':')) {
             val = (size_t) strchr (str, ':');
             size_t size = val - (size_t) str;
@@ -107,10 +104,14 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
         } 
         
         else if (!strcmp (str, "push")) {
+            //fscanf (cmd, "%s", buf);
             fscanf (cmd, SPECIFICATOR, &num);
             fprintf (proc_cmd, "%d " SPECIFICATOR "\n", CMD_PUSH_V, num);
                                Comp->code[Comp->ip++] = CMD_PUSH_V;
                                Comp->code[Comp->ip++] = num;
+            /*if (compFindReg(buf)) {
+                Comp->code[Comp->ip++] = compFindReg(buf);
+            } else if ()*/
         } 
         
         else if (!strcmp(str, "add")) {   
@@ -155,16 +156,16 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
             fscanf (cmd, "%s", str);
             enum regs reg = compFindReg (str);
 
-            if (reg == RESTRICTED_AREA) {
+            if (!reg) {
                 fprintf (stderr, "Invalid name of register");
             }
             fprintf (proc_cmd, "%d %d\n", CMD_POP, reg);
                  Comp->code[Comp->ip++] = CMD_POP;
-            Comp->code[Comp->ip++] = reg;
+                 Comp->code[Comp->ip++] = reg;
         } 
         
-        else if (!strcmp(str, "jump")) {
-            fscanf (cmd, "%s", &buf);
+        else if (!strcmp(str, "jmp")) {
+            fscanf (cmd, "%s", buf);
             Comp->code[Comp->ip++] = CMD_JUMP;
 
             if (!strchr(buf, ':')) {                     
@@ -182,20 +183,14 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
                     fprintf (proc_cmd, "%d %ld\n", CMD_JUMP, add);
                                     Comp->code[Comp->ip++] = add;
                 }
-                Comp->ip++;
-
             }
         } 
 
         else if (!strcmp(str, "ja")) {
-            fscanf (cmd, "%s", &buf);
+            fscanf (cmd, "%s", buf);
             Comp->code[Comp->ip++] = CMD_JUMP_A;
 
-            for (int i = 0; i < MAX_LABEL_NAME; i++) {
-                PRINT_RED(SPECIFICATOR, buf[i]);
-            }
-
-            if (!strchr(buf, ':')) {                      //FIXME - HERE printf is BREAKING
+            if (!strchr(buf, ':')) {                     
                 val = atoi(buf);
                 fprintf (proc_cmd, "%d %u\n", CMD_JUMP_A, val);
                                  Comp->code[Comp->ip++] = val;
@@ -210,17 +205,13 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
                     fprintf (proc_cmd, "%d %ld\n", CMD_JUMP_A, add);
                                       Comp->code[Comp->ip++] = add;
                 }
-                Comp->ip++;
-
             }      
         } 
 
         else if (!strcmp(str, "jb")) {
-            fscanf (cmd, "%s", &buf);
+            fscanf (cmd, "%s", buf);
             Comp->code[Comp->ip++] = CMD_JUMP_B;
-            /*for (int i = 0; i < MAX_LABEL_NAME; i++) {
-                PRINT_RED(SPECIFICATOR, buf[i]);
-            }*/
+            
             if (!strchr(buf, ':')) {                     
                 val = atoi(buf);
                 fprintf (proc_cmd, "%d %u\n", CMD_JUMP_B, val);
@@ -236,13 +227,17 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
                     fprintf (proc_cmd, "%d %ld\n", CMD_JUMP_B, add);
                                       Comp->code[Comp->ip++] = add;
                 }
-                Comp->ip++;
-
             }
+        } 
+        
+        else if (!strcmp(str, "hlt")) {
+            fprintf(proc_cmd, "%d\n", CMD_HLT);
+             Comp->code[Comp->ip++] = CMD_HLT;
         }
+    }   
+    for (size_t i = 0; i < Comp->ip; i++) {
+        printf(SPECIFICATOR"\n", Comp->code[i]);
     }
-    fprintf(proc_cmd, "%d\n", CMD_HLT);
-    Comp->code[Comp->ip++] = CMD_HLT;   
     free (str);
     free(buf);
     fclose (cmd);

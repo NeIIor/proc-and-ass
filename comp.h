@@ -38,7 +38,7 @@ typedef struct Comp{
 
 enum cmds {
     CMD_HLT = -1,
-    CMD_PUSH_V = 1,
+    CMD_PUSH_V = 1, //TODO
     CMD_ADD = 2,
     CMD_SUB = 3,
     CMD_DIV = 4,
@@ -55,9 +55,9 @@ enum regs compFindReg (char* str);
 void compRunCmd       (comp_t* Comp, label_t* Label);
 void initComp         (comp_t* Comp);
 label_t* initLabel    ();
-bool pushLabel        (label_t* Label, char* str, size_t size, size_t ip);
+bool pushLabel        (label_t* Label, const char* str, const size_t size, const size_t ip);
 size_t findLabel      (label_t* Label, char* str);
-void dump             (label_t* Label);
+void dumpLabel        (label_t* Label);
 void dtorLabel        (label_t* Label);
 void passComp         (comp_t* Comp, label_t* Label);
 
