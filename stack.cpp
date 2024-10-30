@@ -10,7 +10,7 @@ void recalcHash (stack_t* Stk) {
 }
 
 void stackInit(stack_t* Stk) {
-    unsigned int k =  8 - (uintptr_t)(Stk->data + Stk->capacity) % 8;
+    unsigned int k =  8 - (uintptr_t)(Stk->capacity * sizeof(type)) % 8;
 
     if (k != 8) {
         Stk->data = (type*) calloc(BASE_SIZE * sizeof(type) + 2 * sizeof(type) + k, sizeof(char));
@@ -23,7 +23,7 @@ void stackInit(stack_t* Stk) {
     
 
     if (!Stk->data) {
-        PRINT_ERROR(stderr, "Unluck in allocating memory for Stk->data");   
+        PRINT_ERROR(stderr, "Unluck with allocating memory for Stk->data");   
     }
 
     Stk->size = 0;
@@ -76,7 +76,7 @@ stack_t* stackRealloc (stack_t* Stk, size_t change) {
     }
 
     Stk->capacity = change;
-    unsigned int i =  8 - (uintptr_t)(Stk->data + Stk->capacity) % 8;
+    unsigned int i =  8 - (uintptr_t)(Stk->capacity * sizeof(type)) % 8;
 
     Stk->data = (type*) ((uintptr_t) realloc((type*) ((uintptr_t) Stk->data - sizeof(type)),
                       Stk->capacity * sizeof(type) + 2 * sizeof(type) + i) + sizeof(type));
@@ -100,6 +100,11 @@ type stackPop (stack_t* Stk) {
 
     if (stackVerify(Stk)) {
         stackDump(Stk, __FILE__, __LINE__);
+    }
+
+    if (Stk->size == 0) {
+        PRINT_ERROR (stderr, "Stack underflow\n");
+        return POISON;
     }
 
     if (Stk->size * 4 <= Stk->capacity) {  

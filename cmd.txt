@@ -1,17 +1,7 @@
-push 0
+push 60
 pop ax
-NEXT:
-pushr ax
-pushr ax
-mul
+push 30
+pop [ax]
+push [60]
 out
-pushr ax
-push 1
-add
-pop ax
-pushr ax
-push 10
-ja SKIP:
 hlt
-SKIP:
-jmp NEXT:

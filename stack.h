@@ -49,6 +49,13 @@ typedef struct {
     size_t parrot2;
 } stack_t;
 
+#define WRITE_BYTE(arr, type, val) { \
+    *(type*)arr = val; \
+    arr = ((type*)arr) + 1; \
+}
+
+//WRITE_BYTE(code, char, 1)
+
 void stackInit                      (stack_t* Stk); 
 stack_t stackPush                   (stack_t* Stk, type num); 
 static stack_t* stackRealloc        (stack_t* Stk, size_t change);

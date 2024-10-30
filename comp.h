@@ -4,26 +4,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <ctype.h>
+#include "enum.h"
 
 typedef long int type;
 #define SPECIFICATOR "%ld"
-#define SIZE_CMD 10
-#define MAX_LABEL_NAME 10
-#define SIZE_BUF 100
+#define SIZE_CMD 15
+#define MAX_LABEL_NAME 15
+#define SIZE_CODE 1000
 #define SIZE_LABEL 15
 #define INVALID_ADDRESS -1
 #define PUSH_SUCCESSFULLY true
 #define PUSH_FAILED false
 #define NUM_COMP_PASSES 2
 
-
-enum regs {
-    RESTRICTED_AREA = 0,
-    AX = 1,
-    BX = 2,
-    CX = 3,
-    DX = 4,
-};
 
 typedef struct Label {
     long long add;
@@ -35,29 +30,13 @@ typedef struct Comp{
     size_t ip;
 } comp_t;
 
-
-enum cmds {
-    CMD_HLT = -1,
-    CMD_PUSH_V = 1, //TODO
-    CMD_ADD = 2,
-    CMD_SUB = 3,
-    CMD_DIV = 4,
-    CMD_OUT = 5,
-    CMD_JUMP_A = 6,
-    CMD_MUL = 7,
-    CMD_JUMP = 8,
-    CMD_JUMP_B = 9,
-    CMD_POP = 10,
-    CMD_PUSH_R = 11, 
-};
-
-enum regs compFindReg (char* str);
-void compRunCmd       (comp_t* Comp, label_t* Label);
+enum regs compFindReg (const char* str);
+int compRunCmd        (comp_t* Comp, label_t* Label);
 void initComp         (comp_t* Comp);
 label_t* initLabel    ();
 bool pushLabel        (label_t* Label, const char* str, const size_t size, const size_t ip);
-size_t findLabel      (label_t* Label, char* str);
-void dumpLabel        (label_t* Label);
+size_t findLabel      (const label_t* Label, const char* str);
+void dumpLabel        (const label_t* Label);
 void dtorLabel        (label_t* Label);
 void passComp         (comp_t* Comp, label_t* Label);
 

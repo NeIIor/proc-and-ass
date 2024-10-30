@@ -11,8 +11,12 @@ int main() {
 }
 
 void passComp (comp_t* Comp, label_t* Label) {
+    assert(Comp);
+    assert(Label);
+
     for (int i = 0; i < NUM_COMP_PASSES; i++) {
         compRunCmd(Comp, Label);
+        Comp->ip = 0;
     }                        
 }
 
@@ -28,19 +32,26 @@ label_t* initLabel () {
 }
 
 void dtorLabel (label_t* Label) {
+    assert(Label);
+
     for (int i = 0; i < SIZE_LABEL; i++) {
         Label[i].add = INVALID_ADDRESS;             
     }
     free (Label);
 }
 
-void dumpLabel (label_t* Label) {
+void dumpLabel (const label_t* Label) {
+    assert(Label);
+
     for (int i = 0; i < SIZE_LABEL; i++) {
         printf("Index: %d\tAddress: %u\tName: %s\n", i, Label[i].add, Label[i].name);
     }
 }
 
-size_t findLabel (label_t* Label, char* str) {
+size_t findLabel (const label_t* Label, const char* str) {
+    assert(Label);
+    assert(str);
+
     char* buf = (char*) calloc (MAX_LABEL_NAME + 1, sizeof(char));
     sscanf(str, "%[^:]", buf);              
     for (int i = 0; i < SIZE_LABEL; i++) {
@@ -51,11 +62,14 @@ size_t findLabel (label_t* Label, char* str) {
     return INVALID_ADDRESS;
 }
 
-bool pushLabel (label_t* Label, const char* str, const size_t size, const size_t ip) {       //TODO - consts
+bool pushLabel (label_t* Label, const char* str, const size_t size, const size_t ip) { 
+    assert(Label);
+    assert(str);     
+
     for (int i = 0; i < SIZE_LABEL; i++) {
         if (Label[i].add == INVALID_ADDRESS) {
             Label[i].add = ip;
-            memcpy(Label[i].name, str, size);
+            memcpy(Label[i].name, str, size);            //head my proc_cmd sabcription + version ...
             return PUSH_SUCCESSFULLY;
         }
     }
@@ -63,11 +77,12 @@ bool pushLabel (label_t* Label, const char* str, const size_t size, const size_t
 }
 
 void initComp (comp_t* Comp) {
-    Comp->code = (type*) calloc (SIZE_BUF, sizeof(type));
+    Comp->code = (type*) calloc (SIZE_CODE, sizeof(type));
     Comp->ip = 0;
 }
 
-enum regs compFindReg (char* str) {
+enum regs compFindReg (const char* str) { //const char const *str?
+    assert(str);
     if (!strcmp (str, "ax")) {
         return AX;
     } else if (!strcmp (str, "bx")) {
@@ -80,7 +95,7 @@ enum regs compFindReg (char* str) {
     return RESTRICTED_AREA;
 }
 
-void compRunCmd (comp_t* Comp, label_t* Label) {
+int compRunCmd (comp_t* Comp, label_t* Label) {
     FILE* cmd = fopen ("cmd.txt", "r");
     FILE* proc_cmd = fopen ("proc_cmd.txt", "w");
     type num;
@@ -93,7 +108,6 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
     } 
 
     while (fscanf(cmd, "%s", str) != -1) { 
-        printf("\t%s\n", str);
         if (strchr (str, ':')) {
             val = (size_t) strchr (str, ':');
             size_t size = val - (size_t) str;
@@ -104,16 +118,84 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
         } 
         
         else if (!strcmp (str, "push")) {
-            //fscanf (cmd, "%s", buf);
-            fscanf (cmd, SPECIFICATOR, &num);
-            fprintf (proc_cmd, "%d " SPECIFICATOR "\n", CMD_PUSH_V, num);
-                               Comp->code[Comp->ip++] = CMD_PUSH_V;
-                               Comp->code[Comp->ip++] = num;
-            /*if (compFindReg(buf)) {
+            fscanf (cmd, "%s", buf);
+
+            fprintf (proc_cmd, "%d ", CMD_PUSH);
+            Comp->code[Comp->ip++] = CMD_PUSH;
+            if (compFindReg(buf)) {
+
+                Comp->code[Comp->ip++] = REG;
                 Comp->code[Comp->ip++] = compFindReg(buf);
-            } else if ()*/
-        } 
-        
+
+                fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+            } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
+                int a = atoi(buf);
+
+                Comp->code[Comp->ip++] = CONST;
+                Comp->code[Comp->ip++] = a;
+
+                fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
+            } else if (isdigit(buf[0]) && strchr(buf, '+')) {
+                char buf1[SIZE_CMD];
+                char buf2[SIZE_CMD];
+                int p;
+
+                sscanf (buf, "%[^+]%n", buf1, &p);
+                sscanf (&(buf[p + 1]), "%[abcdx]", buf2); 
+
+                Comp->code[Comp->ip++] = CONST | REG;
+                Comp->code[Comp->ip++] = atoi(buf1);
+                Comp->code[Comp->ip++] = compFindReg(buf2);
+
+                if (Comp->code[Comp->ip-1]) {
+                    PRINT_ERROR(stderr, "Invalid register");
+                    break;
+                }
+
+                fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", CONST | REG, Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+            } else if (buf[0] = '[' && strchr(buf, ']')) {
+                sscanf(&(buf[1]), "%[^]]", buf);
+                if (compFindReg(buf)) {
+                    Comp->code[Comp->ip++] = REG | RAM;
+                    Comp->code[Comp->ip++] = compFindReg(buf);
+
+                    fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+
+                } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
+                    int a = atoi(buf);
+
+                    Comp->code[Comp->ip++] = CONST | RAM;
+                    Comp->code[Comp->ip++] = a;
+
+                    if (a < 0) {
+                        PRINT_ERROR (stderr, "Invalid RAM address");        //?
+                    }
+
+                    fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
+                } else if (isdigit(buf[0]) && strchr(buf, '+')) {  
+                    char buf1[SIZE_CMD];
+                    char buf2[SIZE_CMD];
+                    int p;
+
+                    sscanf (buf, "%[^+]%n", buf1, &p);
+                    sscanf (&(buf[p + 1]), "%[abcdx]", buf2);
+
+                    Comp->code[Comp->ip++] = CONST | REG | RAM;
+                    Comp->code[Comp->ip++] = atoi(buf1);
+                    Comp->code[Comp->ip++] = compFindReg(buf2);
+
+                    if (Comp->code[Comp->ip - 1] == RESTRICTED_AREA) {
+                        PRINT_ERROR (stderr, "Invalid name of register");
+                        break;
+                    }
+
+                    fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", Comp->code[Comp->ip - 3], Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+                } 
+            } else {
+                    PRINT_ERROR(stderr, "Syntax error in push");
+                }
+        }
+         
         else if (!strcmp(str, "add")) {   
             fprintf (proc_cmd, "%d\n", CMD_ADD);
               Comp->code[Comp->ip++] = CMD_ADD;
@@ -133,35 +215,73 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
             fprintf (proc_cmd, "%d\n", CMD_DIV);
               Comp->code[Comp->ip++] = CMD_DIV;
         } 
+
+        else if (!strcmp(str, "pow")) {
+            fprintf (proc_cmd, "%d\n", CMD_POW);
+              Comp->code[Comp->ip++] = CMD_POW;
+        } 
+
+        else if (!strcmp(str, "sqrt")) {
+            fprintf (proc_cmd, "%d\n", CMD_SQRT);
+              Comp->code[Comp->ip++] = CMD_SQRT;
+        } 
         
         else if (!strcmp(str, "out")) {
             fprintf (proc_cmd, "%d\n", CMD_OUT);
               Comp->code[Comp->ip++] = CMD_OUT;
         } 
         
-        else if (!strcmp(str, "pushr")) {
-            fscanf (cmd, "%s", str);
-            enum regs reg = compFindReg (str);
-
-            if (reg == RESTRICTED_AREA) {
-                fprintf (stderr, "Invalid name of register");
-                break;
-            }
-            fprintf (proc_cmd, "%d %d\n", CMD_PUSH_R, reg);
-                 Comp->code[Comp->ip++] = CMD_PUSH_R;
-                 Comp->code[Comp->ip++] = reg;
-        } 
-        
         else if (!strcmp(str, "pop")) {
-            fscanf (cmd, "%s", str);
-            enum regs reg = compFindReg (str);
+            fscanf (cmd, "%s", buf);
+            fprintf (proc_cmd, "%d ", CMD_POP);
+            Comp->code[Comp->ip++] = CMD_POP;
+            if (compFindReg(buf)) {
+                Comp->code[Comp->ip++] = REG;
+                Comp->code[Comp->ip++] = compFindReg(buf);
 
-            if (!reg) {
-                fprintf (stderr, "Invalid name of register");
+                fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+            } else if (buf[0] = '[' && strchr(buf, ']')) {
+                sscanf(&(buf[1]), "%[^]]", buf);
+                if (compFindReg(buf)) {
+                    Comp->code[Comp->ip++] = REG | RAM;
+                    Comp->code[Comp->ip++] = compFindReg(buf);
+
+                    fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+
+                } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
+                    int a = atoi(buf);
+
+                    Comp->code[Comp->ip++] = CONST | RAM;
+                    Comp->code[Comp->ip++] = a;
+
+                    if (a < 0) {
+                        PRINT_ERROR (stderr, "Invalid RAM address");        //?
+                    }
+
+                    fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
+                } else if (isdigit(buf[0]) && strchr(buf, '+')) {  
+                    char buf1[SIZE_CMD];
+                    char buf2[SIZE_CMD];
+                    int p;
+
+                    sscanf (buf, "%[^+]%n", buf1, &p);
+                    sscanf (&(buf[p + 1]), "%[abcdx]", buf2);
+
+                    Comp->code[Comp->ip++] = CONST | REG | RAM;
+                    Comp->code[Comp->ip++] = atoi(buf1);
+                    Comp->code[Comp->ip++] = compFindReg(buf2);
+
+                    if (Comp->code[Comp->ip - 1] == RESTRICTED_AREA) {
+                        PRINT_ERROR (stderr, "Invalid name of register");
+                        break;
+                    }
+
+                    fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", Comp->code[Comp->ip - 3], Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
+                } 
+            } else {
+                Comp->code[Comp->ip++] = CONST;
+                fprintf(proc_cmd, "\n");
             }
-            fprintf (proc_cmd, "%d %d\n", CMD_POP, reg);
-                 Comp->code[Comp->ip++] = CMD_POP;
-                 Comp->code[Comp->ip++] = reg;
         } 
         
         else if (!strcmp(str, "jmp")) {
@@ -233,11 +353,16 @@ void compRunCmd (comp_t* Comp, label_t* Label) {
         else if (!strcmp(str, "hlt")) {
             fprintf(proc_cmd, "%d\n", CMD_HLT);
              Comp->code[Comp->ip++] = CMD_HLT;
+        } 
+
+        else {
+            PRINT_ERROR (stderr, "Syntax error");
+            break;
         }
     }   
     for (size_t i = 0; i < Comp->ip; i++) {
-        printf(SPECIFICATOR"\n", Comp->code[i]);
-    }
+        PRINT_ERROR(stderr, SPECIFICATOR"\n", Comp->code[i]);
+    }   
     free (str);
     free(buf);
     fclose (cmd);
