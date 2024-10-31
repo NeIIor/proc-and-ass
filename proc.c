@@ -12,19 +12,26 @@ int main () {
 }
 
 void procInputCmd (proc_t* Proc) {
-    FILE* proc = fopen ("proc_cmd.txt", "r");
-    unsigned int i = 0;
-    type val;
-    while (fscanf(proc, "%d", &val) != -1) {
-        Proc->num_cmd++;
-        Proc->code[i++] = val;
-        if (val == CMD_PUSH || val == CMD_JUMP_A || val == CMD_JUMP || val == CMD_JUMP_B ||
-            val == CMD_POP){
-            fscanf(proc, SPECIFICATOR, &val); 
-            Proc->code[i++] = val;
-        }
-    }
-    Proc->size_code = i;
+    FILE* proc = fopen ("proc_cmd.txt" /*make this a parameter*/, "rb");
+    head_t head;
+    fread(&head, sizeof(uint64_t), HEAD, proc);
+    //printf("%lu\n", head.size);
+    fread(Proc->code, sizeof(type), head.size, proc);
+    // for (size_t i = 0; i < head.size; i++){
+    //     printf(SPECIFICATOR"\n", Proc->code[i]);
+    // }
+    // unsigned int i = 0;
+    // type val;
+    // while (fscanf(proc, "%d", &val) != -1) {
+    //     Proc->num_cmd++;
+    //     Proc->code[i++] = val;
+    //     if (val == CMD_PUSH || val == CMD_JUMP_A || val == CMD_JUMP || val == CMD_JUMP_B ||
+    //         val == CMD_POP){
+    //         fscanf(proc, SPECIFICATOR, &val); 
+    //         Proc->code[i++] = val;
+    //     }
+    // }
+    Proc->size_code = head.size;
     fclose (proc);
 }
 
@@ -37,7 +44,7 @@ int procRunCmd (proc_t* Proc) {
         case CMD_HLT:
             return 0;
         case CMD_PUSH:
-            switch (Proc->code[i++]) {
+            switch (Proc->code[i++]) {      //3 if-a vmesto switch-ей
                 case CONST:
                     stackPush (&Proc->Stk, Proc->code[i++]);
                     break;
@@ -113,6 +120,10 @@ int procRunCmd (proc_t* Proc) {
         case CMD_JUMP:
             i = Proc->code[i];
             break;
+        case CMD_IN:
+            scanf(SPECIFICATOR, &a);
+            stackPush (&Proc->Stk, a);
+            break;
         case CMD_JUMP_A:
             a = stackPop (&Proc->Stk);
             b = stackPop (&Proc->Stk);
@@ -122,6 +133,15 @@ int procRunCmd (proc_t* Proc) {
                 i++;
             }
             break;  
+        case CMD_JUMP_EQ:
+            a = stackPop (&Proc->Stk);
+            b = stackPop (&Proc->Stk);   // jump cherez codgen
+            if (b == a) {
+                i = Proc->code[i];
+            } else {
+                i++;
+            }
+            break; 
         case CMD_JUMP_B: 
             a = stackPop (&Proc->Stk);
             b = stackPop (&Proc->Stk);
@@ -151,8 +171,10 @@ int procRunCmd (proc_t* Proc) {
                 case CONST | REG | RAM:
                     a = stackPop (&Proc->Stk);
                     Proc->ram[Proc->code[i++] + Proc->regs[Proc->code[i++]]] = a;
+                    break;
                 default:
                     PRINT_ERROR (stderr, "Error in pop");
+                    break;
             }
             break;
         default: 
@@ -164,7 +186,7 @@ int procRunCmd (proc_t* Proc) {
 }
 
 void procInit  (proc_t* Proc) {
-    Proc->code = (type*) calloc (SIZE_CODE, sizeof(type));
+    Proc->code = (type*) calloc (SIZE_CODE, sizeof(type)); // calloc HEAD size
     Proc->regs = (type*) calloc (NUM_REGS , sizeof(type));
     Proc->ram =  (type*) calloc ( SIZE_RAM, sizeof(type));
     if (!Proc->regs || !Proc->code || !Proc->ram) {

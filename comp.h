@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include "enum.h"
 
 typedef long int type;
@@ -19,7 +20,6 @@ typedef long int type;
 #define PUSH_FAILED false
 #define NUM_COMP_PASSES 2
 
-
 typedef struct Label {
     long long add;
     char name[MAX_LABEL_NAME];
@@ -29,6 +29,12 @@ typedef struct Comp{
     type* code;
     size_t ip;
 } comp_t;
+
+typedef struct h{
+    uint64_t sign;
+    uint64_t vers;
+    uint64_t size;
+} head_t;
 
 enum regs compFindReg (const char* str);
 int compRunCmd        (comp_t* Comp, label_t* Label);

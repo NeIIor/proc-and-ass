@@ -97,7 +97,7 @@ enum regs compFindReg (const char* str) { //const char const *str?
 
 int compRunCmd (comp_t* Comp, label_t* Label) {
     FILE* cmd = fopen ("cmd.txt", "r");
-    FILE* proc_cmd = fopen ("proc_cmd.txt", "w");
+    FILE* proc_cmd = fopen ("proc_cmd.txt", "wb");
     type num;
     long long val = 0;
     char* str = (char*) calloc (SIZE_CMD, sizeof(char));
@@ -120,21 +120,18 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
         else if (!strcmp (str, "push")) {
             fscanf (cmd, "%s", buf);
 
-            fprintf (proc_cmd, "%d ", CMD_PUSH);
             Comp->code[Comp->ip++] = CMD_PUSH;
             if (compFindReg(buf)) {
 
                 Comp->code[Comp->ip++] = REG;
                 Comp->code[Comp->ip++] = compFindReg(buf);
 
-                fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
             } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
                 int a = atoi(buf);
 
                 Comp->code[Comp->ip++] = CONST;
                 Comp->code[Comp->ip++] = a;
 
-                fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
             } else if (isdigit(buf[0]) && strchr(buf, '+')) {
                 char buf1[SIZE_CMD];
                 char buf2[SIZE_CMD];
@@ -152,14 +149,12 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                     break;
                 }
 
-                fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", CONST | REG, Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
             } else if (buf[0] = '[' && strchr(buf, ']')) {
                 sscanf(&(buf[1]), "%[^]]", buf);
                 if (compFindReg(buf)) {
                     Comp->code[Comp->ip++] = REG | RAM;
                     Comp->code[Comp->ip++] = compFindReg(buf);
 
-                    fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
 
                 } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
                     int a = atoi(buf);
@@ -171,7 +166,6 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                         PRINT_ERROR (stderr, "Invalid RAM address");        //?
                     }
 
-                    fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
                 } else if (isdigit(buf[0]) && strchr(buf, '+')) {  
                     char buf1[SIZE_CMD];
                     char buf2[SIZE_CMD];
@@ -189,7 +183,6 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                         break;
                     }
 
-                    fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", Comp->code[Comp->ip - 3], Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
                 } 
             } else {
                     PRINT_ERROR(stderr, "Syntax error in push");
@@ -197,56 +190,46 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
         }
          
         else if (!strcmp(str, "add")) {   
-            fprintf (proc_cmd, "%d\n", CMD_ADD);
               Comp->code[Comp->ip++] = CMD_ADD;
         } 
         
         else if (!strcmp(str, "sub")) {
-            fprintf (proc_cmd, "%d\n", CMD_SUB);
               Comp->code[Comp->ip++] = CMD_SUB;
         } 
         
         else if (!strcmp(str, "mul")) {
-            fprintf (proc_cmd, "%d\n", CMD_MUL);
               Comp->code[Comp->ip++] = CMD_MUL;
         } 
         
         else if (!strcmp(str, "div")) {
-            fprintf (proc_cmd, "%d\n", CMD_DIV);
               Comp->code[Comp->ip++] = CMD_DIV;
         } 
 
         else if (!strcmp(str, "pow")) {
-            fprintf (proc_cmd, "%d\n", CMD_POW);
               Comp->code[Comp->ip++] = CMD_POW;
         } 
 
         else if (!strcmp(str, "sqrt")) {
-            fprintf (proc_cmd, "%d\n", CMD_SQRT);
               Comp->code[Comp->ip++] = CMD_SQRT;
         } 
         
         else if (!strcmp(str, "out")) {
-            fprintf (proc_cmd, "%d\n", CMD_OUT);
               Comp->code[Comp->ip++] = CMD_OUT;
         } 
         
         else if (!strcmp(str, "pop")) {
             fscanf (cmd, "%s", buf);
-            fprintf (proc_cmd, "%d ", CMD_POP);
             Comp->code[Comp->ip++] = CMD_POP;
             if (compFindReg(buf)) {
                 Comp->code[Comp->ip++] = REG;
                 Comp->code[Comp->ip++] = compFindReg(buf);
 
-                fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
             } else if (buf[0] = '[' && strchr(buf, ']')) {
                 sscanf(&(buf[1]), "%[^]]", buf);
                 if (compFindReg(buf)) {
                     Comp->code[Comp->ip++] = REG | RAM;
                     Comp->code[Comp->ip++] = compFindReg(buf);
 
-                    fprintf(proc_cmd, "%d %d\n", Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
 
                 } else if ((isdigit(buf[0]) || buf[0] == '-') && !strchr(buf, '+')) {
                     int a = atoi(buf);
@@ -258,7 +241,6 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                         PRINT_ERROR (stderr, "Invalid RAM address");        //?
                     }
 
-                    fprintf(proc_cmd, "%d " SPECIFICATOR "\n", Comp->code[Comp->ip - 2], a);
                 } else if (isdigit(buf[0]) && strchr(buf, '+')) {  
                     char buf1[SIZE_CMD];
                     char buf2[SIZE_CMD];
@@ -276,11 +258,9 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                         break;
                     }
 
-                    fprintf(proc_cmd, "%d " SPECIFICATOR " %d\n", Comp->code[Comp->ip - 3], Comp->code[Comp->ip - 2], Comp->code[Comp->ip - 1]);
                 } 
             } else {
                 Comp->code[Comp->ip++] = CONST;
-                fprintf(proc_cmd, "\n");
             }
         } 
         
@@ -290,8 +270,7 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
 
             if (!strchr(buf, ':')) {                     
                 val = atoi(buf);
-                fprintf (proc_cmd, "%d %u\n", CMD_JUMP, val);
-                               Comp->code[Comp->ip++] = val;
+                Comp->code[Comp->ip++] = val;
             } else {
                 if ((size_t) strchr(buf, ':') - (size_t) buf > MAX_LABEL_NAME) {
                     PRINT_ERROR (stderr, "Label name too long");
@@ -300,8 +279,7 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
 
                 long long add = findLabel (Label, buf);
                 if (add != INVALID_ADDRESS) {
-                    fprintf (proc_cmd, "%d %ld\n", CMD_JUMP, add);
-                                    Comp->code[Comp->ip++] = add;
+                    Comp->code[Comp->ip++] = add;
                 }
             }
         } 
@@ -312,8 +290,7 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
 
             if (!strchr(buf, ':')) {                     
                 val = atoi(buf);
-                fprintf (proc_cmd, "%d %u\n", CMD_JUMP_A, val);
-                                 Comp->code[Comp->ip++] = val;
+                Comp->code[Comp->ip++] = val;
             } else {
                 if ((size_t) strchr(buf, ':') - (size_t) buf > MAX_LABEL_NAME) {
                     PRINT_ERROR (stderr, "Label name too long");
@@ -322,8 +299,7 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                 
                 long long add = findLabel (Label, buf);
                 if (add != INVALID_ADDRESS) {
-                    fprintf (proc_cmd, "%d %ld\n", CMD_JUMP_A, add);
-                                      Comp->code[Comp->ip++] = add;
+                    Comp->code[Comp->ip++] = add;
                 }
             }      
         } 
@@ -334,8 +310,7 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
             
             if (!strchr(buf, ':')) {                     
                 val = atoi(buf);
-                fprintf (proc_cmd, "%d %u\n", CMD_JUMP_B, val);
-                                 Comp->code[Comp->ip++] = val;
+                Comp->code[Comp->ip++] = val;
             } else {
                 if ((size_t) strchr(buf, ':') - (size_t) buf > MAX_LABEL_NAME) {
                     PRINT_ERROR (stderr, "Label name too long");
@@ -344,25 +319,54 @@ int compRunCmd (comp_t* Comp, label_t* Label) {
                 
                 long long add = findLabel (Label, buf);
                 if (add != INVALID_ADDRESS) {
-                    fprintf (proc_cmd, "%d %ld\n", CMD_JUMP_B, add);
-                                      Comp->code[Comp->ip++] = add;
+                    Comp->code[Comp->ip++] = add;
+                }
+            }
+        } 
+
+        else if (!strcmp(str, "je")) {
+            fscanf (cmd, "%s", buf);
+            Comp->code[Comp->ip++] = CMD_JUMP_B;
+            
+            if (!strchr(buf, ':')) {                     
+                val = atoi(buf);
+                Comp->code[Comp->ip++] = val;
+            } else {
+                if ((size_t) strchr(buf, ':') - (size_t) buf > MAX_LABEL_NAME) {
+                    PRINT_ERROR (stderr, "Label name too long");
+                    break;
+                }
+                
+                long long add = findLabel (Label, buf);
+                if (add != INVALID_ADDRESS) {
+                    Comp->code[Comp->ip++] = add;           //push symbol
                 }
             }
         } 
         
         else if (!strcmp(str, "hlt")) {
-            fprintf(proc_cmd, "%d\n", CMD_HLT);
              Comp->code[Comp->ip++] = CMD_HLT;
         } 
 
+        else if (!strcmp(str, "in")) {
+            Comp->code[Comp->ip++] = CMD_IN;
+        }
+
         else {
-            PRINT_ERROR (stderr, "Syntax error");
+            PRINT_ERROR (stderr, "Syntax error\n");
             break;
         }
     }   
     for (size_t i = 0; i < Comp->ip; i++) {
         PRINT_ERROR(stderr, SPECIFICATOR"\n", Comp->code[i]);
-    }   
+    }  
+    head_t head = {0};
+    head.sign = 'Egor';
+    printf("%s\n", &(head.sign));
+    head.vers = 1;
+    head.size = Comp->ip;
+    fwrite (&head, sizeof(head), 1, proc_cmd);
+    fwrite (Comp->code, sizeof(type), Comp->ip,  proc_cmd); 
     free (str);
     free(buf);
     fclose (cmd);

@@ -7,6 +7,12 @@
 #define NUM_REGS 4
 #define SIZE_RAM 100
 
+typedef struct h{
+    uint64_t sign;
+    uint64_t vers;
+    uint64_t size;
+} head_t;
+
 typedef struct proc {
     type* regs;
     stack_t Stk;
