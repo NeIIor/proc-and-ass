@@ -338,6 +338,8 @@ int compRunCmd (comp_t* Comp, label_t* Labels) {
 
                 if (add != INVALID_ADDRESS) {
                     Comp->code[Comp->ip++] = add;
+                } else {
+                    return 1;
                 }
             }
         } 
@@ -363,6 +365,8 @@ int compRunCmd (comp_t* Comp, label_t* Labels) {
 
                 if (add != INVALID_ADDRESS) {
                     Comp->code[Comp->ip++] = add;
+                } else {
+                    return 1;
                 }
             }      
         } 
@@ -387,6 +391,8 @@ int compRunCmd (comp_t* Comp, label_t* Labels) {
 
                 if (add != INVALID_ADDRESS) {
                     Comp->code[Comp->ip++] = add;
+                } else {
+                    return 1;
                 }
             }
         } 
@@ -412,6 +418,8 @@ int compRunCmd (comp_t* Comp, label_t* Labels) {
 
                 if (add != INVALID_ADDRESS) {
                     Comp->code[Comp->ip++] = add;          
+                } else {
+                    return 1;
                 }
             }
         } 
@@ -419,6 +427,36 @@ int compRunCmd (comp_t* Comp, label_t* Labels) {
         else if (!strcmp(str, "hlt")) {
              Comp->code[Comp->ip++] = CMD_HLT;
         } 
+
+        else if (!strcmp(str, "call")) {
+
+            fscanf (cmd, "%s", buf);
+            Comp->code[Comp->ip++] = CMD_CALL;
+
+            if (!strchr(buf, ':')) {       
+
+                val = atoi(buf);
+                Comp->code[Comp->ip++] = val;
+            } else {
+
+                if ((size_t) strchr(buf, ':') - (size_t) buf > MAX_LABEL_NAME) {
+
+                    PRINT_ERROR (stderr, "Label name too long\n");
+                    return 1;
+                }
+                long long add = findLabel (Labels, buf);
+
+                if (add != INVALID_ADDRESS) {
+                    Comp->code[Comp->ip++] = add;
+                } else {
+                    return 1;
+                }
+            }
+        }
+
+        else if (!strcmp(str, "ret")) {
+            Comp->code[Comp->ip++] = CMD_RET;
+        }
 
         else if (!strcmp(str, "in")) {
             Comp->code[Comp->ip++] = CMD_IN;

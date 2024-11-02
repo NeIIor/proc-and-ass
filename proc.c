@@ -235,6 +235,15 @@ int procRunCmd (proc_t* Proc) {
                             break;
                     }
                     break;
+                case CMD_CALL:
+                    stackPush (&Proc->Stk, i + 1);
+                    i = Proc->code[i];
+                    break;
+                case CMD_RET:
+                    a = stackPop (&Proc->Stk);
+                    i = a;
+                    break;
+
             }
         } else if (Proc->code[i] == CMD_ADD         || Proc->code[i] == CMD_SQRT        || 
                    Proc->code[i] == CMD_SUB         || Proc->code[i] == CMD_POW         || 
