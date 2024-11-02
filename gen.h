@@ -35,7 +35,9 @@ enum cmds {
     CMD_JUMP_EQ     = 17,
     CMD_POP         = 18, 
     CMD_IN          = 19,
-    CMD_PUT_C       = 20,  
+    CMD_PUT_C       = 20,
+    CMD_CALL        = 21,
+    CMD_RET         = 22,  
 };
 
 typedef struct {

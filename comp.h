@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <ctype.h>
-#include "proc&comp.h"
+#include "gen.h"
 
 typedef long int type;
 #define SPECIFICATOR "%ld"

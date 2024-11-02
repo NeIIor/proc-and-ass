@@ -1,7 +1,7 @@
 #ifndef PROC_H__
 #define PROC_H__
 #include "stack.h"
-#include "proc&comp.h"
+#include "gen.h"
 #include "colors.h"
 #define NUM_REGS 4
 #define MAX_CHAR 127
