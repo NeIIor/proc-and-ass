@@ -33,12 +33,7 @@ int procRunCmd (proc_t* Proc) {
     type a, b;
 
     while (i < Proc->size_code) {  
-        if (Proc->code[i] != CMD_ADD         && Proc->code[i] != CMD_SQRT        &&
-            Proc->code[i] != CMD_SUB         && Proc->code[i] != CMD_POW         && 
-            Proc->code[i] != CMD_DIV         && Proc->code[i] != CMD_MUL         &&
-            Proc->code[i] != CMD_DIV_REM     && Proc->code[i] != CMD_BIT_ADD     && 
-            Proc->code[i] != CMD_BIT_MUL     && Proc->code[i] != CMD_BIT_SHIFT_L && 
-            Proc->code[i] != CMD_BIT_SHIFT_R)  {  
+        if (Proc->code[i] < CMD_ARITHMETIC_START || Proc->code[i] > CMD_ARIPHMETIC_END)  {  
             switch (Proc->code[i++]) {
 
                 case CMD_HLT:
@@ -245,12 +240,7 @@ int procRunCmd (proc_t* Proc) {
                     break;
 
             }
-        } else if (Proc->code[i] == CMD_ADD         || Proc->code[i] == CMD_SQRT        || 
-                   Proc->code[i] == CMD_SUB         || Proc->code[i] == CMD_POW         || 
-                   Proc->code[i] == CMD_DIV         || Proc->code[i] == CMD_MUL         ||
-                   Proc->code[i] == CMD_DIV_REM     || Proc->code[i] == CMD_BIT_ADD     || 
-                   Proc->code[i] == CMD_BIT_MUL     || Proc->code[i] == CMD_BIT_SHIFT_L || 
-                   Proc->code[i] == CMD_BIT_SHIFT_R){
+        } else {
 
             a = stackPop (&Proc->Stk);
             b = stackPop (&Proc->Stk);

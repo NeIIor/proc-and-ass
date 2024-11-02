@@ -1,24 +1,24 @@
 in
 pop ax
-push 1
-pop cx
-REC:
 call FUNC:
 push cx
 out
 hlt
 FUNC:
-push cx
 push ax
-mul
-pop cx
+push 1
+je NEXT:
+push ax
 push ax
 push 1
 sub
 pop ax
-push ax
-push 1
-je NEXT:
-call REC:
+call FUNC:
+push cx
+mul
+pop cx
+ret
 NEXT:
+push 1
+pop cx
 ret
