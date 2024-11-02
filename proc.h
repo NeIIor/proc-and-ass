@@ -1,17 +1,10 @@
 #ifndef PROC_H__
 #define PROC_H__
 #include "stack.h"
-#include "enum.h"
+#include "proc&comp.h"
 #include "colors.h"
-#define SIZE_CODE 1000
 #define NUM_REGS 4
-#define SIZE_RAM 100
-
-typedef struct h{
-    uint64_t sign;
-    uint64_t vers;
-    uint64_t size;
-} head_t;
+#define MAX_CHAR 127
 
 typedef struct proc {
     type* regs;
@@ -22,7 +15,7 @@ typedef struct proc {
     type* ram;
 } proc_t;
 
-void procInputCmd (proc_t* Proc);
+void procInputCmd (proc_t* Proc, FILE* proc);
 int  procRunCmd   (proc_t* Proc);
 void procInit     (proc_t* Proc);
 void procDtor     (proc_t* Proc);

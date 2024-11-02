@@ -6,15 +6,13 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <ctype.h>
-#include <stdint.h>
-#include "enum.h"
+#include "proc&comp.h"
 
 typedef long int type;
 #define SPECIFICATOR "%ld"
 #define SIZE_CMD 15
 #define MAX_LABEL_NAME 15
-#define SIZE_CODE 1000
-#define SIZE_LABEL 15
+#define MAX_NUM_LABELS 15
 #define INVALID_ADDRESS -1
 #define PUSH_SUCCESSFULLY true
 #define PUSH_FAILED false
@@ -30,20 +28,14 @@ typedef struct Comp{
     size_t ip;
 } comp_t;
 
-typedef struct h{
-    uint64_t sign;
-    uint64_t vers;
-    uint64_t size;
-} head_t;
-
 enum regs compFindReg (const char* str);
 int compRunCmd        (comp_t* Comp, label_t* Label);
 void initComp         (comp_t* Comp);
-label_t* initLabel    ();
-bool pushLabel        (label_t* Label, const char* str, const size_t size, const size_t ip);
-size_t findLabel      (const label_t* Label, const char* str);
-void dumpLabel        (const label_t* Label);
-void dtorLabel        (label_t* Label);
-void passComp         (comp_t* Comp, label_t* Label);
+label_t* initLabels   ();
+bool pushLabel        (label_t* Labels, const char* str, const size_t size, const size_t ip);
+size_t findLabel      (const label_t* Labels, const char* str);
+void dumpLabels       (const label_t* Labels);
+void dtorLabels       (label_t* Labels);
+int passComp          (comp_t* Comp, label_t* Labels);
 
 #endif //PROC_H__

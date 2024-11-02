@@ -6,7 +6,7 @@ in
 pop cx
 push ax
 push 0
-je NEXT:
+je LINE:
 push bx
 push bx
 mul
@@ -17,6 +17,12 @@ mul
 mul
 add
 pop dx
+push dx
+push 0
+jb BELOW:
+push dx
+push 0
+je ZERO:
 push -1
 push bx
 mul
@@ -46,6 +52,90 @@ LINE:
 push 0
 push bx
 je FREE:
-
+push cx
+push -1
+mul
+push bx
+div
+out
+hlt
 FREE:
-je 
+push 0
+push cx
+je INF:
+push 110
+pop [0]
+push 111
+pop [1]
+push 32
+pop [2]
+push 114
+pop [3]
+push 111
+pop [4]
+push 111
+pop [5]
+push 116
+pop [6]
+push 115
+pop [7]
+putc [0]
+putc [1]
+putc [2]
+putc [3]
+putc [4]
+putc [5]
+putc [6]
+putc [7]
+hlt
+INF:
+push 105
+pop [0]
+push 110
+pop [1]
+push 102
+pop [2]
+putc [0]
+putc [1]
+putc [2]
+hlt
+BELOW:
+push 110
+pop [0]
+push 111
+pop [1]
+push 32
+pop [2]
+push 114
+pop [3]
+push 111
+pop [4]
+push 111
+pop [5]
+push 116
+pop [6]
+push 115
+pop [7]
+putc [0]
+putc [1]
+putc [2]
+putc [3]
+putc [4]
+putc [5]
+putc [6]
+putc [7]
+hlt
+ZERO:
+push -1
+push bx
+mul
+push dx
+push 2
+sqrt
+sub
+push 2
+push ax
+mul
+div
+out
+hlt
