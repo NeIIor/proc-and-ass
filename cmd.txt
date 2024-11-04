@@ -1,24 +1,7 @@
-in
-pop ax
-call FUNC:
-push cx
+push 10
+pop bx
+push 4
+pop [20+bx]
+push [30]
 out
 hlt
-FUNC:
-push ax
-push 1
-je NEXT:
-push ax
-push ax
-push 1
-sub
-pop ax
-call FUNC:
-push cx
-mul
-pop cx
-ret
-NEXT:
-push 1
-pop cx
-ret

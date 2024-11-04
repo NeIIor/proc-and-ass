@@ -13,11 +13,15 @@ typedef struct proc {
     size_t size_code;
     size_t num_cmd;
     type* ram;
+    size_t ip;
 } proc_t;
 
 void procInputCmd (proc_t* Proc, FILE* proc);
 int  procRunCmd   (proc_t* Proc);
 void procInit     (proc_t* Proc);
 void procDtor     (proc_t* Proc);
+type procArgPush  (proc_t* Proc);
+type procArgPop   (proc_t* Proc);
+
 
 #endif //PROC_H__

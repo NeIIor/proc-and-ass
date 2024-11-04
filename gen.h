@@ -4,6 +4,7 @@
 #include <stdint.h>
 #define SIZE_CODE 1000
 #define SIZE_RAM 100
+#define NUM_CMDS 23
 
 
 enum regs {
@@ -29,12 +30,14 @@ enum cmds {
     CMD_BIT_ADD          = 10,
     CMD_BIT_SHIFT_L      = 11,
     CMD_BIT_SHIFT_R      = 12,
-    CMD_ARIPHMETIC_END   = 12,
+    CMD_ARITHMETIC_END   = 12,
     CMD_OUT              = 13, 
     CMD_JUMP             = 14,
+    CMD_ARITHM_JMP_START = 15,
     CMD_JUMP_A           = 15, 
     CMD_JUMP_B           = 16,
     CMD_JUMP_EQ          = 17,
+    CMD_ARITHM_JUMP_END  = 17,
     CMD_POP              = 18, 
     CMD_IN               = 19,
     CMD_PUT_C            = 20,

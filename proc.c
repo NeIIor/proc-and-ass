@@ -15,6 +15,52 @@ int main () {
     return 0;
 }
 
+type  procArgPush (proc_t* Proc) {
+    type arg_type = Proc->code[Proc->ip++];
+    type res = 0;
+    if (arg_type & 1) res += Proc->code[Proc->ip++];
+    if (arg_type & 2) res += Proc->regs[Proc->code[Proc->ip++]];
+    if (arg_type & 4) res  = Proc->ram[res];
+    return res;
+}
+
+type procArgPop (proc_t* Proc) {
+    type arg_type = Proc->code[Proc->ip++];
+    type res = 0;
+    switch (arg_type) {
+        case ARG_CONST:
+            stackPop(&Proc->Stk);
+            break;
+        case ARG_REG:
+            res = stackPop (&Proc->Stk);
+            Proc->regs[Proc->code[Proc->ip++]] = res;
+            break;
+        case ARG_REG | ARG_RAM:
+            res = stackPop (&Proc->Stk);
+            Proc->ram[Proc->regs[Proc->code[Proc->ip++]]] = res;
+            break;
+        case ARG_CONST | ARG_RAM:
+            res = stackPop (&Proc->Stk);
+            Proc->ram[Proc->code[Proc->ip++]] = res;
+            break;
+        case ARG_CONST | ARG_REG | ARG_RAM:
+            res = stackPop (&Proc->Stk);
+            Proc->ram[Proc->code[Proc->ip++] + Proc->regs[Proc->code[Proc->ip++]]] = res;
+            break;
+        default:
+            PRINT_ERROR (stderr, "Syntax error in pop\n");
+            break;
+    }
+    return res;
+}
+
+/*type  getArgPop  (proc_t* Proc) {
+    type arg_type = Proc->code[Proc->ip++];
+    type res = 0;
+    type val = stackPop (&Proc->Stk);
+    if (arg_type & ARG_CONST) 
+}*/
+
 void procInputCmd (proc_t* Proc, FILE* proc) {
     head_bin_proc_t head;
 
@@ -29,214 +75,59 @@ void procInputCmd (proc_t* Proc, FILE* proc) {
 }
 
 int procRunCmd (proc_t* Proc) {
-    size_t i = 0;
     type a, b;
 
-    while (i < Proc->size_code) {  
-        if (Proc->code[i] < CMD_ARITHMETIC_START || Proc->code[i] > CMD_ARIPHMETIC_END)  {  
-            switch (Proc->code[i++]) {
+    while (Proc->ip < Proc->size_code) {  
+        if ((Proc->code[Proc->ip] < CMD_ARITHMETIC_START || Proc->code[Proc->ip] > CMD_ARITHMETIC_END) && (Proc->code[Proc->ip] < CMD_ARITHM_JMP_START || Proc->code[Proc->ip] > CMD_ARITHM_JUMP_END))  {  
+            switch (Proc->code[Proc->ip++]) {
 
                 case CMD_HLT:
                     return 0;
                     break;
                 case CMD_PUSH:
-
-                    switch (Proc->code[i++]) { 
-                                                        //3 if-a vmesto switch-ей
-                        case ARG_CONST:
-                            stackPush (&Proc->Stk, Proc->code[i++]);
-                            break;
-                        case ARG_REG:
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-                            stackPush (&Proc->Stk, Proc->regs[Proc->code[i++]]);
-                            break;
-                        case ARG_CONST | ARG_REG:
-                            a = Proc->code[i++];
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-
-                            b = Proc->regs[Proc->code[i++]];
-                            stackPush (&Proc->Stk, a + b);
-                            break;
-                        case ARG_RAM | ARG_CONST: 
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            stackPush(&Proc->Stk, Proc->ram[Proc->code[i++]]);
-                            break;
-                        case ARG_RAM | ARG_REG:
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-
-                            if (Proc->regs[Proc->code[i++]] < 0 || 
-                                Proc->regs[Proc->code[i++]] > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            stackPush(&Proc->Stk, Proc->ram[Proc->regs[Proc->code[i++]]]);
-                            break;
-                        case ARG_RAM | ARG_REG | ARG_CONST: 
-
-                            a = Proc->code[i++];
-                            b = Proc->regs[Proc->code[i++]];
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-
-                            if (a + b < 0 || a + b > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            stackPush(&Proc->Stk, Proc->ram[a + b]);
-                            break;
-                        default: 
-                            PRINT_ERROR (stderr, "Syntax error in push\n");
-                            return 1;
-                            break;
+                    a = procArgPush(Proc);
+                    if (!a) {
+                        PRINT_ERROR(stderr, "Error in push");
+                        return 1;
+                    } else {
+                        stackPush (&Proc->Stk, a);
                     }
                     break;
                 case CMD_OUT:
                     printf(SPECIFICATOR "\n", stackPop (&Proc->Stk));
                     break;
                 case CMD_JUMP:
-                    i = Proc->code[i];
+                    Proc->ip = Proc->code[Proc->ip];
                     break;
                 case CMD_IN:
                     scanf(SPECIFICATOR, &a);
                     stackPush (&Proc->Stk, a);
                     break;
-                case CMD_JUMP_A:
-
-                    a = stackPop (&Proc->Stk);
-                    b = stackPop (&Proc->Stk);
-
-                    if (b > a) {
-                        i = Proc->code[i];
+                case CMD_PUT_C:
+                    a = procArgPush(Proc);
+                    if (!a) {
+                        PRINT_ERROR(stderr, "Error in putc");
+                        return 1;
                     } else {
-                        i++;
-                    }
-                    break;  
-                case CMD_JUMP_EQ:
-
-                    a = stackPop (&Proc->Stk);
-                    b = stackPop (&Proc->Stk);   
-
-                    if (b == a) {
-                        i = Proc->code[i];
-                    } else {
-                        i++;
-                    }
-                    break; 
-                case CMD_JUMP_B: 
-
-                    a = stackPop (&Proc->Stk);
-                    b = stackPop (&Proc->Stk);
-
-                    if (b < a) {
-                        i = Proc->code[i];
-                    } else {
-                        i++;
+                        printf("%c", a);
                     }
                     break;
-                case CMD_PUT_C:
-                    switch (Proc->code[i++]) {
-                        case ARG_RAM | ARG_CONST: 
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            printf("%c", Proc->ram[Proc->code[i++]]);
-                            break;
-                        case ARG_RAM | ARG_REG:
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-
-                            if (a + b < 0 || a + b > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            printf("%c", Proc->ram[Proc->regs[Proc->code[i++]]]);
-                            break;
-                        case ARG_RAM | ARG_REG | ARG_CONST: 
-
-                            a = Proc->code[i++];
-                            b = Proc->regs[Proc->code[i++]];
-
-                            if (Proc->code[i] < 0 || Proc->code[i] > NUM_REGS) {
-                                PRINT_ERROR (stderr, "Invalid register\n");
-                                return 1;
-                            }
-
-                            if (a + b < 0 || a + b > SIZE_RAM - 1) {
-                                PRINT_ERROR (stderr, "Invalid RAM address\n");
-                                return 1;
-                            }
-
-                            printf("%c", Proc->ram[a + b]);
-                            break;
-                        default: 
-                            PRINT_ERROR (stderr, "Syntax error in putc\n");
-                            return 1;
-                            break;
-                    }
                     break;
                 case CMD_POP:
-
-                    switch (Proc->code[i++]) {
-
-                        case ARG_CONST:
-                            stackPop(&Proc->Stk);
-                            break;
-                        case ARG_REG:
-                            a = stackPop (&Proc->Stk);
-                            Proc->regs[Proc->code[i++]] = a;
-                            break;
-                        case ARG_REG | ARG_RAM:
-                            a = stackPop (&Proc->Stk);
-                            Proc->ram[Proc->regs[Proc->code[i++]]] = a;
-                            break;
-                        case ARG_CONST | ARG_RAM:
-                            a = stackPop (&Proc->Stk);
-                            Proc->ram[Proc->code[i++]] = a;
-                            break;
-                        case ARG_CONST | ARG_REG | ARG_RAM:
-                            a = stackPop (&Proc->Stk);
-                            Proc->ram[Proc->code[i++] + Proc->regs[Proc->code[i++]]] = a;
-                            break;
-                        default:
-                            PRINT_ERROR (stderr, "Syntax error in pop\n");
-                            break;
+                    a = procArgPop (Proc);
+                    if (!a) {
+                        PRINT_ERROR (stderr, "Error in pop");
+                        return 1;
                     }
+
                     break;
                 case CMD_CALL:
-                    stackPush (&Proc->Stk, i + 1);
-                    i = Proc->code[i];
+                    stackPush (&Proc->Stk, Proc->ip + 1);
+                    Proc->ip = Proc->code[Proc->ip];
                     break;
                 case CMD_RET:
                     a = stackPop (&Proc->Stk);
-                    i = a;
+                    Proc->ip = a;
                     break;
 
             }
@@ -245,7 +136,32 @@ int procRunCmd (proc_t* Proc) {
             a = stackPop (&Proc->Stk);
             b = stackPop (&Proc->Stk);
 
-            switch (Proc->code[i++]) {
+            switch (Proc->code[Proc->ip++]) {
+
+                case CMD_JUMP_A:
+
+                    if (b > a) {
+                        Proc->ip = Proc->code[Proc->ip];
+                    } else {
+                        Proc->ip++;
+                    }
+                    break;  
+                case CMD_JUMP_EQ:
+
+                    if (b == a) {
+                        Proc->ip = Proc->code[Proc->ip];
+                    } else {
+                        Proc->ip++;
+                    }
+                    break; 
+                case CMD_JUMP_B: 
+
+                    if (b < a) {
+                        Proc->ip = Proc->code[Proc->ip];
+                    } else {
+                        Proc->ip++;
+                    }
+                    break;
 
                 case CMD_ADD:
                     stackPush (&Proc->Stk, a + b); 
@@ -284,6 +200,7 @@ int procRunCmd (proc_t* Proc) {
         }
     }
     PRINT_ERROR(stderr, "Forced stop of programm. No command hlt\n");
+    return 1;
 }
 
 void procInit  (proc_t* Proc) {
@@ -296,6 +213,7 @@ void procInit  (proc_t* Proc) {
     
     Proc->num_cmd = 0;
     Proc->size_code = 0;
+    Proc->ip = 0;
     stackInit (&Proc->Stk);
 }
 
