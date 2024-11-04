@@ -32,7 +32,6 @@ typedef struct {
 typedef struct Comp{
     type* code;
     size_t ip;
-    cmd_t cmds[NUM_CMDS];
 } comp_t;
 
 enum CMD_TYPE {

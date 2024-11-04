@@ -1,6 +1,31 @@
 #include "comp.h"
 #include "colors.h"
 
+cmd_t cmds[] = {{"hlt",            CMD_HLT,               NO_ARG}, 
+                {"push",           CMD_PUSH,              PUSH  },
+                {"add",            CMD_ADD,               NO_ARG},
+                {"sub",            CMD_SUB,               NO_ARG},
+                {"div",            CMD_DIV,               NO_ARG},
+                {"mul",            CMD_MUL,               NO_ARG},
+                {"pow",            CMD_POW,               NO_ARG},
+                {"sqrt",           CMD_SQRT,              NO_ARG},
+                {"div_r",          CMD_DIV_REM,           NO_ARG},
+                {"b_mul",          CMD_BIT_MUL,           NO_ARG},
+                {"b_add",          CMD_BIT_ADD,           NO_ARG},
+                {"b_shift_l",      CMD_BIT_SHIFT_L,       NO_ARG},
+                {"b_shift_r",      CMD_BIT_SHIFT_R,       NO_ARG},
+                {"out",            CMD_OUT,               NO_ARG},
+                {"j",              CMD_JUMP,              JUMP},
+                {"ja",             CMD_JUMP_A,            JUMP},
+                {"jb",             CMD_JUMP_B,            JUMP},
+                {"je",             CMD_JUMP_EQ,           JUMP},
+                {"pop",            CMD_POP,               POP},
+                {"in",             CMD_IN,                NO_ARG},
+                {"putc",           CMD_PUT_C,             PUSH},
+                {"call",           CMD_CALL,              JUMP},
+                {"ret",            CMD_RET,               NO_ARG}
+};
+
 int main() {
     comp_t Comp = {};
     initComp(&Comp);
@@ -87,100 +112,7 @@ bool pushLabel (label_t* Labels, const char* str, const size_t size, const size_
 void initComp (comp_t* Comp) {
     Comp->code = (type*) calloc (SIZE_CODE, sizeof(type));
     Comp->ip = 0;
-    Comp->cmds[ 0].name = "hlt";
-    Comp->cmds[ 0].num  = CMD_HLT;
-    Comp->cmds[ 0].type = NO_ARG;
-
-    Comp->cmds[ 1].name = "push";
-    Comp->cmds[ 1].num  = CMD_PUSH;
-    Comp->cmds[ 1].type = PUSH;
-
-    Comp->cmds[ 2].name = "add";
-    Comp->cmds[ 2].num  = CMD_ADD;
-    Comp->cmds[ 2].type = NO_ARG;
-
-    Comp->cmds[ 3].name = "sub";
-    Comp->cmds[ 3].num  = CMD_SUB;
-    Comp->cmds[ 3].type = NO_ARG;
-
-    Comp->cmds[ 4].name = "div";
-    Comp->cmds[ 4].num  = CMD_DIV;
-    Comp->cmds[ 4].type = NO_ARG;
-
-    Comp->cmds[ 5].name = "mul";
-    Comp->cmds[ 5].num  = CMD_MUL;
-    Comp->cmds[ 5].type = NO_ARG;
-
-    Comp->cmds[ 6].name = "pow";
-    Comp->cmds[ 6].num  = CMD_POW;
-    Comp->cmds[ 6].type = NO_ARG;
-
-    Comp->cmds[ 7].name = "sqrt";
-    Comp->cmds[ 7].num  = CMD_SQRT;
-    Comp->cmds[ 7].type = NO_ARG;
-
-    Comp->cmds[ 8].name = "div_r";
-    Comp->cmds[ 8].num  = CMD_DIV_REM;
-    Comp->cmds[ 8].type = NO_ARG;
-
-    Comp->cmds[ 9].name = "b_mul";
-    Comp->cmds[ 9].num  = CMD_BIT_MUL;
-    Comp->cmds[ 9].type = NO_ARG;
-
-    Comp->cmds[10].name = "b_add";
-    Comp->cmds[10].num  = CMD_BIT_ADD;
-    Comp->cmds[10].type = NO_ARG;
-
-    Comp->cmds[11].name = "b_shift_l";
-    Comp->cmds[11].num  = CMD_BIT_SHIFT_L;
-    Comp->cmds[11].type = NO_ARG;
-
-    Comp->cmds[12].name = "b_shift_r";
-    Comp->cmds[12].num  = CMD_BIT_SHIFT_R;
-    Comp->cmds[12].type = NO_ARG;
-
-    Comp->cmds[13].name = "out";
-    Comp->cmds[13].num  = CMD_OUT;
-    Comp->cmds[13].type = NO_ARG;
-
-    Comp->cmds[14].name = "j";
-    Comp->cmds[14].num  = CMD_JUMP;
-    Comp->cmds[14].type = JUMP;
-
-    Comp->cmds[15].name = "ja";
-    Comp->cmds[15].num  = CMD_JUMP_A;
-    Comp->cmds[15].type = JUMP;
-
-    Comp->cmds[16].name = "jb";
-    Comp->cmds[16].num  = CMD_JUMP_B;
-    Comp->cmds[16].type = JUMP;
-
-    Comp->cmds[17].name = "je";
-    Comp->cmds[17].num  = CMD_JUMP_EQ;
-    Comp->cmds[17].type = JUMP;
-    
-    Comp->cmds[18].name = "pop";
-    Comp->cmds[18].num  = CMD_POP;
-    Comp->cmds[18].type = POP;
-
-    Comp->cmds[19].name = "in";
-    Comp->cmds[19].num  = CMD_IN;
-    Comp->cmds[19].type = NO_ARG;
-
-    Comp->cmds[20].name = "putc";
-    Comp->cmds[20].num  = CMD_PUT_C;
-    Comp->cmds[20].type = PUSH;
-
-    Comp->cmds[21].name = "call";
-    Comp->cmds[21].num  = CMD_CALL;
-    Comp->cmds[21].type = JUMP;
-
-    Comp->cmds[22].name = "ret";
-    Comp->cmds[22].num  = CMD_RET;
-    Comp->cmds[22].type = NO_ARG;
 }
-
-
 
 enum regs compFindReg (const char* str) { //const char const *str?
     assert(str);
@@ -421,24 +353,24 @@ int compRunComp (comp_t* Comp, label_t* Labels) {
     while (fscanf(cmd, "%s", str) != -1) { 
         printf("%s\n", str);
         for (int i = 0; i < NUM_CMDS; i++) {
-            if (!strcmp (str, Comp->cmds[i].name)) {
-                Comp->code[Comp->ip++] = Comp->cmds[i].num;
-                switch (Comp->cmds[i].type) {
+            if (!strcmp (str, cmds[i].name)) {
+                Comp->code[Comp->ip++] = cmds[i].num;
+                switch (cmds[i].type) {
                     case PUSH:
                         if (compArgPush (Comp        , cmd)) {
-                            PRINT_ERROR (stderr, "Error in " "%s\n", Comp->cmds[i].name);
+                            PRINT_ERROR (stderr, "Error in " "%s\n", cmds[i].name);
                             return 1;
                         }
                         break;
                     case POP:
                         if (compArgPop  (Comp        , cmd)) {
-                            PRINT_ERROR (stderr, "Error in " "%s\n", Comp->cmds[i].name);
+                            PRINT_ERROR (stderr, "Error in " "%s\n", cmds[i].name);
                             return 1;
                         }
                         break;
                     case JUMP:
                         if (compArgJump (Comp, Labels, cmd)) {
-                            PRINT_ERROR (stderr, "Error in " "%s\n", Comp->cmds[i].name);
+                            PRINT_ERROR (stderr, "Error in " "%s\n", cmds[i].name);
                             return 1;
                         }
                         break;
@@ -455,7 +387,7 @@ int compRunComp (comp_t* Comp, label_t* Labels) {
     head_bin_proc_t head = {0};
     head.sign = 'Egor';
     printf("%s\n", &(head.sign));
-    head.vers = 1;
+    head.vers = 8;
     head.size = Comp->ip;
 
     fwrite (&head, sizeof(head), 1, proc_cmd);
