@@ -1,0 +1,24 @@
+in
+pop ax
+call FUNC:
+push cx
+out
+hlt
+FUNC:
+push ax
+push 1
+je NEXT:
+push ax
+push ax
+push 1
+sub
+pop ax
+call FUNC:
+push cx
+mul
+pop cx
+ret
+NEXT:
+push 1
+pop cx
+ret
