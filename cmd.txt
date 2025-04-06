@@ -1,7 +1,0 @@
-push 10
-pop bx
-push 4
-pop [20+bx]
-push [30]
-out
-hlt
